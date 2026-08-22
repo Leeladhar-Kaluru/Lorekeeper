@@ -1,0 +1,6 @@
+langchain
+langchain-groq
+langchain-text-splitters
+python-dotenv
+langchain-google-genai
+pymupdf
