@@ -21,9 +21,14 @@ class VectorStore:
         """Create a stable ID for a document chunk."""
 
         source = document.metadata["source"]
-        page = document.metadata.get("page", 0)
         chunk_index = document.metadata["chunk_index"]
 
+        if source=="discord":
+            message_id = document.metadata["message_id"]
+            server_id = document.metadata["server_id"]
+            return f"{source}:{server_id}:{message_id}:chunk-{chunk_index}"
+
+        page = document.metadata.get("page", 0)
         return f"{source}:page-{page}:chunk-{chunk_index}"
 
     def add_documents(self, documents: list[Document]) -> None:
