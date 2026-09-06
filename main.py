@@ -1,45 +1,65 @@
-from app.config import SERVER_HISTORY_FILE, PDF_FILE
-from app.rag.loaders.text_loader import TextDocumentLoader
-from app.rag.loaders.pdf_loader import PDFDocumentLoader
-from app.rag.splitter import DocumentSplitter
+from dotenv import load_dotenv
+
+from app.llm.groq_service import GroqService
 from app.rag.embeddings import EmbeddingService
+from app.rag.loaders.pdf_loader import PDFDocumentLoader
+from app.rag.rag_service import RAGService
+from app.rag.splitter import DocumentSplitter
+from app.rag.vector_store import VectorStore
+
+load_dotenv()
 
 def main():
-
-    loader = PDFDocumentLoader(PDF_FILE)
+    # 1. Load PDF
+    loader = PDFDocumentLoader("data/sample.pdf")
     documents = loader.load()
 
-    for i,doc in enumerate(documents):
-        print(f"Document {i}")
-        print(doc)
-        print("\n")
+    print(f"Loaded {len(documents)} pages")
 
-    splitter = DocumentSplitter()
+    # 2. Split documents into chunks
+    splitter = DocumentSplitter(
+        chunk_size=500,
+        chunk_overlap=100,
+    )
+
     chunks = splitter.split(documents)
 
     print(f"Created {len(chunks)} chunks")
 
-    for index, chunk in enumerate(chunks, start=1):
-        print(f"\n--- Chunk {index} ---")
-        print(chunk.page_content)
-        print(f"Metadata: {chunk.metadata}")
-
+    # 3. Create embedding service
     embedding_service = EmbeddingService()
 
-    texts = [chunk.page_content for chunk in chunks]
+    # 4. Create vector store
+    vector_store = VectorStore(
+        embedding_function=embedding_service,
+    )
 
-    vectors = embedding_service.embed_documents(texts)
+    # 5. Store chunks
+    vector_store.add_documents(chunks)
 
-    for i,vector in enumerate(vectors):
-        print(f"Embedding {i}")
-        print(vector)
-        print("\n")
+    print("Documents stored in Chroma")
 
-    print(f"Chunks: {len(chunks)}")
-    print(f"Vectors: {len(vectors)}")
-    print(f"Vector dimensions: {len(vectors[0])}")
+    # 6. Create LLM service
+    llm = GroqService()
+
+    # 7. Create RAG service
+    rag = RAGService(
+        vector_store=vector_store,
+        llm_service=llm,
+    )
+
+    # 8. Ask a question
+    query = "Which attributes are important for assessing credit risk?"
+
+    answer = rag.answer(
+        query=query,
+        k=3,
+    )
+
+    print(f"\nQuestion: {query}")
+    print("\nAnswer:")
+    print(answer)
 
 
 if __name__ == "__main__":
     main()
-

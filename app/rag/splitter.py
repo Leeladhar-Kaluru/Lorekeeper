@@ -15,9 +15,15 @@ class DocumentSplitter:
             chunk_overlap=self.chunk_overlap,
         )
 
-    def split(self,text:list[Document])->list[Document]:
+    def split(self,documents:list[Document])->list[Document]:
 
-        if not text:
-            raise ValueError("Text cannot be empty")
+        if not documents:
+            raise ValueError("Documents cannot be empty")
         
-        return self.splitter.split_documents(text)
+        chunks = self.splitter.split_documents(documents)
+
+        for index,chunk in enumerate(chunks):
+            chunk.metadata["chunk_index"] = index
+
+        return chunks
+        

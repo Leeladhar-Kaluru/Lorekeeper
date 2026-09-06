@@ -4,3 +4,6 @@ langchain-text-splitters
 python-dotenv
 langchain-google-genai
 pymupdf
+sentence-transformers
+chromadb
+langchain-chroma

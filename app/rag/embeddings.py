@@ -1,19 +1,33 @@
-from app.config import GEMINI_API_KEY
+from sentence_transformers import SentenceTransformer
+from langchain_core.embeddings import Embeddings
 
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+class EmbeddingService(Embeddings):
 
-class EmbeddingService:
-    
-    def __init__(self):
-        self.embeddings = GoogleGenerativeAIEmbeddings(
-            api_key=GEMINI_API_KEY,
-            model="gemini-embedding-001"
+    def __init__(self,model_name:str = "sentence-transformers/all-MiniLM-L6-v2"):
+        self.model = SentenceTransformer(model_name)
+
+    def embed_documents(self,texts:list[str]) -> list[list[float]]:
+
+        if not texts:
+            raise ValueError("Texts cannot be empty")
+
+        embeddings = self.model.encode(
+            texts,
+            convert_to_numpy=True,
+            show_progress_bar=True
         )
 
-    def embed_documents(self,texts: list[str])->list[list[float]]:
+        return embeddings.tolist()
 
-        return self.embeddings.embed_documents(texts)
+    def embed_query(self,query:str)-> list[float]:
 
-    def embed_query(self,query:str)->list[float]:
+        if not query:
+            raise ValueError("Query cannot be empty")
 
-        return self.embeddings.embed_query(query)
+        embedding = self.model.encode(
+            query,
+            convert_to_numpy=True,
+            show_progress_bar=True,
+        )
+        
+        return embedding.tolist()

@@ -17,7 +17,7 @@ class PDFDocumentLoader:
                 page_document = Document(
                     page_content = text,
                     metadata = {
-                        "source": self.file_path.name,
+                        "source": self.file_path,
                         "page": page_number + 1,
                     }
                 )
