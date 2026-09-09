@@ -8,6 +8,8 @@ class HistoricalMessageLoader:
         messages = []
 
         async for message in channel.history(limit=limit):
+            if message.author.bot:
+                continue
             messages.append(message)
 
         messages.reverse()
