@@ -88,6 +88,10 @@ class HelperService:
 
         10. Do not answer the question.
 
+        11. make sure to explain the intent as simple as possible(not some one line sentence)
+        such that the query plan will make proper sense and can be used in easy retrieval of
+        data from database.
+
         USER QUESTION
         =============
 
