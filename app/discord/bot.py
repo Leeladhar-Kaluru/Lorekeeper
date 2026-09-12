@@ -14,11 +14,14 @@ from app.rag.vector_store import VectorStore
 from app.rag.rag_service import RAGService
 
 from app.llm.answer_generator import AnswerGenerator
+from app.llm.groq_service import HelperService
 
 from app.query.query_engine import QueryEngine
 
 from app.database.connection import SessionLocal
 from app.database.message_repository import MessageRepository
+
+from app.graph.graph import graph
 
 load_dotenv()
 
@@ -40,7 +43,11 @@ class LoreKeeper(discord.Client):
             vector_store=self.vector_store
         )
 
-        self.query_engine = QueryEngine()
+        self.helper_service = HelperService()
+
+        self.query_engine = QueryEngine(
+            helper_service=self.helper_service,
+        )
 
         self.answer_generator = AnswerGenerator()
 
@@ -151,75 +158,13 @@ def run_bot():
 
         await interaction.response.defer()
 
-        # ---------------------------------------------------------
-        # 1. Generate SQL from the user's question
-        # ---------------------------------------------------------
+        result = graph.invoke({"question": question})
 
-        sql_query = bot.query_engine.query_generator(question)
-
-        # ---------------------------------------------------------
-        # 2. Execute SQL
-        # ---------------------------------------------------------
-
-        session = SessionLocal()
-
-        try:
-
-            repository = MessageRepository(session)
-
-            database_results = repository.execute_query(
-                sql_query
-            )
-
-        finally:
-            session.close()
-
-        print("\n========== DATABASE RESULTS ==========")
-        print(database_results)
-
-        # ---------------------------------------------------------
-        # 3. Semantic retrieval and Expanded Context
-        # ---------------------------------------------------------
-
-        semantic_context = bot.rag_service.retrieve(
-            query=question,
-            k=10,
-        )
-
-        # ---------------------------------------------------------
-        # 4. Build final evidence
-        # ---------------------------------------------------------
-
-        final_context = f"""
-        DATABASE RESULTS
-        ================
-
-        {database_results}
-
-
-        SEMANTIC RETRIEVAL
-        ==================
-
-        {semantic_context}
-        """
-
-        # ---------------------------------------------------------
-        # 5. Generate final answer
-        # ---------------------------------------------------------
-
-        answer = bot.answer_generator.generate(
-            question=question,
-            context=final_context,
-        )
-
-        response = (
-            f"**Question**: {question}\n\n"
-            f"**Answer**: {answer}"
-        )
+        answer = result["answer"]
 
         await LoreKeeper.send_long_message(
-            interaction,
-            response,
+            interaction=interaction,
+            content=f"**Question**: {question}\n\n**Answer**: {answer}",
         )
 
     bot.run(token)

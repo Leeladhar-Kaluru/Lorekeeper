@@ -166,5 +166,5 @@ class MessageRepository:
 
         result = self.session.execute(statement).all()
 
-        return result
+        return [dict(row._mapping) for row in result]
          

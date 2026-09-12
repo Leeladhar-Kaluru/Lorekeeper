@@ -4,26 +4,21 @@ from app.query.query_plan import QueryPlan
 
 class QueryEngine:
     """
-    Converts a natural-language question into
-    a PostgreSQL query.
+    Converts a QueryPlan into a PostgreSQL query.
     """
 
-    def __init__(self):
-        self.helper = HelperService()
+    def __init__(self, helper_service: HelperService):
+        # Reuse the HelperService instance created by the application.
+        self.helper = helper_service
 
-    def query_generator(self, query: str) -> str:
-
-        # ---------------------------------------------------------
-        # 1. Understand the user's question
-        # ---------------------------------------------------------
-
-        plan: QueryPlan = self.helper.understand_query(query)
-
-        print("\n========== QUERY PLAN ==========")
-        print(plan.model_dump_json(indent=2))
+    def query_generator(self, plan: QueryPlan) -> str:
 
         # ---------------------------------------------------------
-        # 2. Generate SQL
+        # Generate SQL from the QueryPlan.
+        #
+        # understand_query() is NOT called here because the
+        # LangGraph understand_query node has already produced
+        # the QueryPlan and stored it in AgentState.
         # ---------------------------------------------------------
 
         generated_query = self.helper.generate_query(plan)
